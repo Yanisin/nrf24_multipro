@@ -28,6 +28,7 @@ static uint8_t CX10_packet_length;
 static uint32_t CX10_packet_period;
 static const uint8_t CX10_tx_rx_id[] = {0xCC,0xCC,0xCC,0xCC,0xCC};
 
+
 uint32_t process_CX10()
 {
     uint32_t nextPacket = micros() + CX10_packet_period;
@@ -43,8 +44,10 @@ uint32_t process_CX10()
 void CX10_init()
 {
     uint8_t i;
+
     switch(current_protocol) {
         case PROTO_CX10_BLUE:
+            Serial.print("Blue\r\n");
             for(i=0; i<4; i++) {
                 packet[5+i] = 0xFF; // clear aircraft ID
             }
@@ -52,6 +55,7 @@ void CX10_init()
             CX10_packet_period = CX10_BLUE_PACKET_PERIOD;
             break;
         case PROTO_CX10_GREEN:
+            Serial.print("Green\r\n");
             CX10_packet_length = CX10_GREEN_PACKET_LENGTH;
             CX10_packet_period = CX10_GREEN_PACKET_PERIOD;
             break;
@@ -83,6 +87,7 @@ void CX10_init()
     NRF24L01_WriteReg(NRF24L01_1C_DYNPD, 0x00);       // Disable dynamic payload length on all pipes
     NRF24L01_WriteReg(NRF24L01_1D_FEATURE, 0x00);     // Set feature bits
     delay(150);
+    Serial.print("Init done.\r\n");
 }
 
 void CX10_bind()
@@ -90,6 +95,7 @@ void CX10_bind()
     uint16_t counter=CX10_GREEN_BIND_COUNT;
     bool bound=false;
     uint32_t timeout;
+    Serial.print("Binding...\r\n");
     while(!bound) {
         NRF24L01_SetTxRxMode(TX_EN);
         XN297_Configure(_BV(NRF24L01_00_EN_CRC) | _BV(NRF24L01_00_CRCO) | _BV(NRF24L01_00_PWR_UP));
@@ -126,6 +132,7 @@ void CX10_bind()
             return;
         }
     }
+    Serial.print("... done.\r\n");
     digitalWrite(ledPin, HIGH);
 }
 
@@ -148,15 +155,21 @@ void CX10_Write_Packet(uint8_t init)
     packet[10+offset]= highByte(ppm[THROTTLE]);
     packet[11+offset]= lowByte(ppm[RUDDER]);
     packet[12+offset]= highByte(ppm[RUDDER]);
-    if(ppm[AUX2] > PPM_MAX_COMMAND)
+//    if(ppm[AUX2] > PPM_MAX_COMMAND)
+ //       packet[12+offset] |= 0x10; // flip flag
+    if(btn & (1<<0))
         packet[12+offset] |= 0x10; // flip flag
+    
     // rate / mode
-    if(ppm[AUX1] > PPM_MAX_COMMAND) // mode 3 / headless on CX-10A
-        packet[13+offset] = 0x02;
-    else if(ppm[AUX1] < PPM_MIN_COMMAND) // mode 1
-        packet[13+offset] = 0x00;
-    else // mode 2
-        packet[13+offset] = 0x01;
+    //if(ppm[AUX1] > PPM_MAX_COMMAND) // mode 3 / headless on CX-10A
+    //    packet[13+offset] = 0x02;
+    //else if(ppm[AUX1] < PPM_MIN_COMMAND) // mode 1
+    //    packet[13+offset] = 0x00;
+    //else // mode 2
+      //packet[13+offset] = 0x01;
+        
+     packet[13+offset] = mode;
+        
     packet[14+offset] = 0x00;
     if(current_protocol == PROTO_CX10_BLUE) {
         // snapshot (CX10-C)
@@ -169,3 +182,4 @@ void CX10_Write_Packet(uint8_t init)
 
     XN297_WritePayload(packet, CX10_packet_length);
 }
+

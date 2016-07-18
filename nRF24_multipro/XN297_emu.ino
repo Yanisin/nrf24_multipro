@@ -140,3 +140,4 @@ uint8_t XN297_ReadPayload(uint8_t* msg, uint8_t len)
         msg[i] = bit_reverse(msg[i]) ^ bit_reverse(xn297_scramble[i+xn297_addr_len]);
     return res;
 }
+

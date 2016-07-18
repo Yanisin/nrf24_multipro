@@ -354,3 +354,4 @@ void Symax_init()
     SymaX_phase = SYMAX_INIT1;
     delayMicroseconds(500);
 }
+

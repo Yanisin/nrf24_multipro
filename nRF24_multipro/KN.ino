@@ -343,3 +343,4 @@ u16 kn_convert_channel(u8 num)
     return map(ppm[num], PPM_MIN, PPM_MAX, 0, 1023);
 }
 
+

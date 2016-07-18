@@ -27,7 +27,7 @@ enum {
     H8_3D_FLAG_RATE_HIGH= 0x04,
     H8_3D_FLAG_LED      = 0x08, // Light on H22
     H8_3D_FLAG_HEADLESS = 0x10, // RTH + headless on H8, headless on JJRC H20
-    H8_3D_FLAG_RTH      = 0x20, // 360° flip mode on H8 3D, RTH on JJRC H20
+    H8_3D_FLAG_RTH      = 0x20, // 360ï¿½ flip mode on H8 3D, RTH on JJRC H20
 };
 
 enum {
@@ -142,3 +142,4 @@ void H8_3D_init()
     NRF24L01_WriteReg(NRF24L01_1D_FEATURE, 0x01);
     NRF24L01_Activate(0x73);
 }
+

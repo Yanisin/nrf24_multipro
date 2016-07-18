@@ -156,3 +156,4 @@ void CG023_WritePacket(uint8_t init)
     packet[14] = 0x00;
     XN297_WritePayload(packet, CG023_PAYLOAD_SIZE);
 }
+

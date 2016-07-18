@@ -130,7 +130,7 @@ void NRF24L01_SetTxRxMode(enum TXRX_State mode)
     }
 }
 
-uint8_t NRF24L01_Reset()
+uint8_t NRF24L01_Reset(void)
 {
     NRF24L01_FlushTx();
     NRF24L01_FlushRx();
@@ -157,3 +157,4 @@ uint8_t NRF24L01_SetBitrate(uint8_t bitrate)
     rf_setup = (rf_setup & 0xD7) | ((bitrate & 0x02) << 4) | ((bitrate & 0x01) << 3);
     return NRF24L01_WriteReg(NRF24L01_06_RF_SETUP, rf_setup);
 }
+

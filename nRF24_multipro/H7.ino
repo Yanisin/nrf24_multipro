@@ -166,3 +166,4 @@ uint32_t process_H7()
     H7_WritePacket();
     return result;
 }
+

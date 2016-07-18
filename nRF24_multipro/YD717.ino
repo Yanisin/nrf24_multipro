@@ -247,3 +247,4 @@ void YD717_init()
     YD717_initialize();
     YD717_state = YD717_INIT1;
 }
+

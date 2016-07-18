@@ -140,3 +140,4 @@ void Bayang_send_packet(u8 bind)
     NRF24L01_FlushTx();
     XN297_WritePayload(packet, BAYANG_PACKET_SIZE);
 }
+

@@ -206,3 +206,4 @@ void HiSky_build_ch_data()
         packet[i<4?8:9] |= (temp >> 2) & 0xc0;
     }
 }
+
