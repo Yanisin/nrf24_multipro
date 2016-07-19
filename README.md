@@ -1,6 +1,11 @@
 # nrf24-multipro
 nRF24L01 multi-protocol RC transmitter
 
+This project uses the original nRF24L01 multi-protocol, but it modifies it, so
+it's controlled by analog potentiometers.
+The intention is to build this in those cheap TXes, that cames with the quad.
+
+
 ![Screenshot](http://i.imgur.com/AeMJKzT.jpg)  
 [Need a module ?](mailto://goebish@gmail.com)
 
