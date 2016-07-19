@@ -16,13 +16,11 @@
 #define BTN4_MAXVAL 1
 
 
-
-
-int THR_PIN=A7;
-int RUD_PIN=A6;
-int ELE_PIN=A3;
-int AIL_PIN=A4;
-int BTN_PIN=A5;
+#define THR_PIN A7
+#define RUD_PIN A6 
+#define ELE_PIN A3
+#define AIL_PIN A4
+#define BTN_PIN A5
 
 
 
