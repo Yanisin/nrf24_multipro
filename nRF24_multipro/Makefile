@@ -5,7 +5,11 @@ PROGRAM=build/nRF24_multipro.ino.hex
 
 all: ${PROGRAM}
 
-${PROGRAM}: build $(shell ls *.ino *.h Makefile)
+${PROGRAM}: build $(shell ls *.ino *.h Makefile | grep -v 'cfg\.h')
+	rm -rf build/sketch
+	if [ `hostname` = andree ]; then cp cfg_andree.h cfg.h ; \
+	else cp cfg_default.h cfg.h; fi
+	touch cfg.h
 	DISPLAY=$(DISPLAY) $(ARD) --pref build.path=build --verify nRF24_multipro.ino
 
 build:
