@@ -110,6 +110,7 @@ Serial.print(aux1);
 #endif
 
 	// defaults for buttons not acting as switches:
+	ppm[AUX1] = 0; // see BUTTON_FLIP2
 	ppm[AUX2] = 0; // see BUTTON_FLIP1
 
 	// looks like the capacitor evens out the button input nicely, so no noise
@@ -125,11 +126,11 @@ Serial.print(aux1);
 			}
 
 			if (aux_mode == 1)
-				ppm[AUX1] = PPM_MIN_COMMAND + 1;
+				ppm[AUX5] = PPM_MIN_COMMAND + 1;
 			else if (aux_mode == 2)
-				ppm[AUX1] = PPM_MAX_COMMAND + 1;
+				ppm[AUX5] = PPM_MAX_COMMAND + 1;
 			else
-				ppm[AUX1] = 0;
+				ppm[AUX5] = 0;
 
 			break;
 		case BUTTON_FLIP1:

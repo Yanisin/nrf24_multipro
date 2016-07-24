@@ -159,9 +159,9 @@ void CX10_Write_Packet(uint8_t init)
        packet[12+offset] |= 0x10; // flip flag
     
     // rate / mode
-    if(ppm[AUX1] > PPM_MAX_COMMAND) // mode 3 / headless on CX-10A
+    if(ppm[AUX5] > PPM_MAX_COMMAND) // mode 3 / headless on CX-10A
        packet[13+offset] = 0x02;
-    else if(ppm[AUX1] < PPM_MIN_COMMAND) // mode 1
+    else if(ppm[AUX5] < PPM_MIN_COMMAND) // mode 1
        packet[13+offset] = 0x00;
     else // mode 2
       packet[13+offset] = 0x01;
