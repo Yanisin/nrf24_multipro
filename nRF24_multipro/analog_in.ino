@@ -1,5 +1,3 @@
-
-
 #define PPM_SCALE ((PPM_MAX-PPM_MIN)/(PPM_MAX_A - PPM_MIN_A))
 #define PPM_RANGE (PPM_MAX-PPM_MIN)
 #define PPM_RANGE_A (PPM_MAX_A-PPM_MIN_A)
@@ -14,14 +12,6 @@
 #define BTN3_MAXVAL 296
 #define BTN4_MINVAL 1
 #define BTN4_MAXVAL 1
-
-
-#define THR_PIN A7
-#define RUD_PIN A6 
-#define ELE_PIN A3
-#define AIL_PIN A4
-#define BTN_PIN A5
-
 
 
 // update ppm values out of ISR    

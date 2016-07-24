@@ -32,6 +32,8 @@
 #include <EEPROM.h>
 #include "iface_nrf24l01.h"
 
+#include "pincfg.h"
+
 
 /*FIXME how is the right way for arduino? */
 /*function declarations*/
@@ -44,30 +46,6 @@ uint8_t btn;
 uint8_t mode;
 uint8_t mode_btn_last;
 
-// ############ Wiring ################
-#define PPM_pin   2  // PPM in
-//SPI Comm.pins with nRF24L01
-#define MOSI_pin  3  // MOSI - D3
-#define SCK_pin   4  // SCK  - D4
-#define CE_pin    5  // CE   - D5
-#define MISO_pin  A0 // MISO - A0
-#define CS_pin    A1 // CS   - A1
-
-#define ledPin    13 // LED  - D13
-
-#define BUZ_PIN 6     //buzzer on D6
-
-// SPI outputs
-#define MOSI_on PORTD |= _BV(3)  // PD3
-#define MOSI_off PORTD &= ~_BV(3)// PD3
-#define SCK_on PORTD |= _BV(4)   // PD4
-#define SCK_off PORTD &= ~_BV(4) // PD4
-#define CE_on PORTD |= _BV(5)    // PD5
-#define CE_off PORTD &= ~_BV(5)  // PD5
-#define CS_on PORTC |= _BV(1)    // PC1
-#define CS_off PORTC &= ~_BV(1)  // PC1
-// SPI input
-#define  MISO_on (PINC & _BV(0)) // PC0
 
 #define RF_POWER TX_POWER_80mW 
 
@@ -166,15 +144,15 @@ static uint16_t ppm[12] = {PPM_MIN,PPM_MIN,PPM_MIN,PPM_MIN,PPM_MID,PPM_MID,
                            PPM_MID,PPM_MID,PPM_MID,PPM_MID,PPM_MID,PPM_MID,};
 void ISR_ppm();
 
-
-
 void setup()
 { 
     Serial.begin(230400);
     randomSeed((analogRead(A4) & 0x1F) | (analogRead(A5) << 5));
     pinMode(ledPin, OUTPUT);
     digitalWrite(ledPin, LOW); //start LED off
+#ifdef PPM_pin
     pinMode(PPM_pin, INPUT);
+#endif
     pinMode(MOSI_pin, OUTPUT);
     pinMode(SCK_pin, OUTPUT); 
     pinMode(CS_pin, OUTPUT);
