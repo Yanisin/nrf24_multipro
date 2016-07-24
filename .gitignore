@@ -4,3 +4,4 @@
 nRF24_multipro/Debug
 nRF24_multipro/Release
 nRF24_multipro/Visual Micro
+*.hex
