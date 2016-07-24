@@ -1,4 +1,5 @@
-ARD=/home/badger/prj/vrtulnicky/arduino-1.6.6/arduino
+ARD ?= /home/badger/prj/vrtulnicky/arduino-1.6.6/arduino
+DISPLAY ?= ":1"
 
 all:
-	DISPLAY=:1 $(ARD) --verify nRF24_multipro.ino
+	DISPLAY=$(DISPLAY) $(ARD) --verify nRF24_multipro.ino
