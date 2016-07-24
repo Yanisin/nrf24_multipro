@@ -146,7 +146,7 @@ void ISR_ppm();
 
 void setup()
 { 
-    Serial.begin(230400);
+    Serial.begin(SERIAL_SPEED);
     randomSeed((analogRead(A4) & 0x1F) | (analogRead(A5) << 5));
     pinMode(ledPin, OUTPUT);
     digitalWrite(ledPin, LOW); //start LED off
@@ -348,7 +348,7 @@ void selectProtocol()
 
 void init_protocol()
 {
-  Serial.print("\r\nProtocol:");
+    Serial.print("\r\nProtocol:");
     switch(current_protocol) {
         case PROTO_CG023:
         case PROTO_YD829:
@@ -407,10 +407,3 @@ void init_protocol()
     }
     Serial.write('d');
 }
-
-
-
-
-
-
-

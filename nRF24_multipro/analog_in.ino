@@ -2,29 +2,57 @@
 #define PPM_RANGE (PPM_MAX-PPM_MIN)
 #define PPM_RANGE_A (PPM_MAX_A-PPM_MIN_A)
 
-#define BTN0_MINVAL 680
-#define BTN0_MAXVAL 688
-#define BTN1_MINVAL 451
-#define BTN1_MAXVAL 459
-#define BTN2_MINVAL 379
-#define BTN2_MAXVAL 387
-#define BTN3_MINVAL 288
-#define BTN3_MAXVAL 296
-#define BTN4_MINVAL 1
-#define BTN4_MAXVAL 1
+enum {
+	BUTTON_NONE = 0,
+
+	BUTTON_R_UP,
+	BUTTON_R_DOWN,
+	BUTTON_R_LEFT,
+	BUTTON_R_RIGHT,
+
+	BUTTON_L_UP,
+	BUTTON_L_DOWN,
+	BUTTON_L_LEFT,
+	BUTTON_L_RIGHT,
+
+	BUTTON_F_LEFT,
+	BUTTON_F_RIGHT,
+
+	BUTTON_COUNT
+};
+
+const uint16_t btns_range = 20;
+
+const uint16_t btns[BUTTON_COUNT] = {
+	[BUTTON_NONE] = 1023,
+
+	[BUTTON_R_UP] = btns_range, // ~= 0
+	[BUTTON_R_DOWN] = 92,
+	[BUTTON_R_LEFT] = 342,
+	[BUTTON_R_RIGHT] = 514,
+
+	[BUTTON_L_UP] = 170,
+	[BUTTON_L_DOWN] = 236,
+	[BUTTON_L_LEFT] = 385,
+	[BUTTON_L_RIGHT] = 293,
+
+	[BUTTON_F_LEFT] = 457,
+	[BUTTON_F_RIGHT] = 683,
+};
 
 
 // update ppm values out of ISR    
 void update_ppm()
 {
   static uint32_t thr,ail,ele,rud,aux1;
+  static uint8_t i;
 
   thr = analogRead(THR_PIN);
   ail = analogRead(AIL_PIN);   
   ele = analogRead(ELE_PIN);   
   rud = analogRead(RUD_PIN);   
   aux1 = analogRead(BTN_PIN);
-#if 1
+#ifdef DEBUG_ANALOG_PPM
   Serial.write('\r');
        Serial.write('\n');
        Serial.write('a');
@@ -51,21 +79,15 @@ Serial.print(aux1);
   ppm[RUDDER] = (int)(PPM_MIN + (rud * PPM_RANGE)/PPM_RANGE_A);
   //ppm[AUX1] = (int)(PPM_MIN + (aux1 * PPM_RANGE)/PPM_RANGE_A);
 
-  btn = 0;
-  if(aux1 > BTN0_MINVAL && aux1 < BTN0_MAXVAL)
-     btn |= 1<<0;
-  if(aux1 > BTN1_MINVAL && aux1 < BTN1_MAXVAL)
-     btn |= 1<<1;
-  if(aux1 > BTN2_MINVAL && aux1 < BTN2_MAXVAL)
-     btn |= 1<<2;
-  if(aux1 > BTN3_MINVAL && aux1 < BTN3_MAXVAL)
-     btn |= 1<<3;
-  if(aux1 > BTN4_MINVAL && aux1 < BTN4_MAXVAL)
-  
-     btn |= 1<<4;
-
-       Serial.write('\r');
-       Serial.write('\n');
+  btn = BUTTON_NONE;
+	for (i = 0; i < BUTTON_COUNT; i++) {
+	  if (aux1 >= (btns[i] - btns_range) && aux1 <= (btns[i] + btns_range)) {
+		  btn = i;
+		  break;
+	  }
+	}
+#ifdef DEBUG_ANALOG_PPM
+       Serial.write(' '); Serial.write(' '); Serial.write(' '); Serial.write(' ');
        Serial.write('b');
        Serial.write('t');
        Serial.write('n');Serial.write('(');
@@ -73,16 +95,10 @@ Serial.print(aux1);
        Serial.write(')');
        Serial.write(':');
        
-       for (uint8_t n=0; n<8;n++)
-       {
-        if (btn & 1<<n)
-            Serial.write('1');
-        else
-            Serial.write('0');
-        Serial.write(' ');
-        }
+       Serial.print(btn);
+#endif
 
-     if(btn & (1<<2)) {
+     if(btn == BUTTON_L_LEFT) {
           if(mode_btn_last == 0) {
             mode++;
             if (mode>2) {
@@ -97,6 +113,7 @@ Serial.print(aux1);
         } else {
             mode_btn_last=0;
         }
+#ifdef DEBUG_ANALOG_PPM
 #if 0
        Serial.write('\r');
        Serial.write('\n');
@@ -108,7 +125,8 @@ Serial.print(aux1);
         Serial.print(ppm[ch]);
         Serial.write(' ');
         }
-#endif     
+#endif
+#endif
 }
 
 
