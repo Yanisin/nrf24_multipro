@@ -155,20 +155,16 @@ void CX10_Write_Packet(uint8_t init)
     packet[10+offset]= highByte(ppm[THROTTLE]);
     packet[11+offset]= lowByte(ppm[RUDDER]);
     packet[12+offset]= highByte(ppm[RUDDER]);
-//    if(ppm[AUX2] > PPM_MAX_COMMAND)
- //       packet[12+offset] |= 0x10; // flip flag
-    if(btn & (1<<0))
-        packet[12+offset] |= 0x10; // flip flag
+   if(ppm[AUX2] > PPM_MAX_COMMAND)
+       packet[12+offset] |= 0x10; // flip flag
     
     // rate / mode
-    //if(ppm[AUX1] > PPM_MAX_COMMAND) // mode 3 / headless on CX-10A
-    //    packet[13+offset] = 0x02;
-    //else if(ppm[AUX1] < PPM_MIN_COMMAND) // mode 1
-    //    packet[13+offset] = 0x00;
-    //else // mode 2
-      //packet[13+offset] = 0x01;
-        
-     packet[13+offset] = mode;
+    if(ppm[AUX1] > PPM_MAX_COMMAND) // mode 3 / headless on CX-10A
+       packet[13+offset] = 0x02;
+    else if(ppm[AUX1] < PPM_MIN_COMMAND) // mode 1
+       packet[13+offset] = 0x00;
+    else // mode 2
+      packet[13+offset] = 0x01;
         
     packet[14+offset] = 0x00;
     if(current_protocol == PROTO_CX10_BLUE) {

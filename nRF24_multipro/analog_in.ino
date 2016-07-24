@@ -41,11 +41,22 @@ const uint16_t btns[BUTTON_COUNT] = {
 };
 
 
+enum {
+	BUTTON_FLIP1 = BUTTON_F_RIGHT,
+	BUTTON_FLIP2 = BUTTON_F_LEFT,
+	BUTTON_MODE = BUTTON_L_LEFT,
+	BUTTON_HEADLESS = BUTTON_L_RIGHT,
+	BUTTON_AUX1 = BUTTON_L_UP,
+	BUTTON_AUX2 = BUTTON_L_DOWN
+};
+
 // update ppm values out of ISR    
 void update_ppm()
 {
   static uint32_t thr,ail,ele,rud,aux1;
+  static uint8_t btn, btn_last = BUTTON_NONE;
   static uint8_t i;
+  static uint8_t aux_mode = 0;
 
   thr = analogRead(THR_PIN);
   ail = analogRead(AIL_PIN);   
@@ -98,21 +109,38 @@ Serial.print(aux1);
        Serial.print(btn);
 #endif
 
-     if(btn == BUTTON_L_LEFT) {
-          if(mode_btn_last == 0) {
-            mode++;
-            if (mode>2) {
-              mode = 0;
-              }
-            for (uint8_t m=0; m <= mode; m++){
-              tone(BUZ_PIN, 4000, 10);
-              delay(40);
-            }
-            mode_btn_last=1;
-          }
-        } else {
-            mode_btn_last=0;
-        }
+	// defaults for buttons not acting as switches:
+	ppm[AUX2] = 0; // see BUTTON_FLIP1
+
+	// looks like the capacitor evens out the button input nicely, so no noise
+	// cancelation here...
+	switch (btn) {
+		case BUTTON_MODE:
+			if (btn_last != BUTTON_NONE)
+				break;
+			aux_mode = (aux_mode + 1) % 3;
+			for (uint8_t m=0; m <= aux_mode; m++){
+				tone(BUZ_PIN, 4000, 10);
+				delay(40);
+			}
+
+			if (aux_mode == 1)
+				ppm[AUX1] = PPM_MIN_COMMAND + 1;
+			else if (aux_mode == 2)
+				ppm[AUX1] = PPM_MAX_COMMAND + 1;
+			else
+				ppm[AUX1] = 0;
+
+			break;
+		case BUTTON_FLIP1:
+			ppm[AUX2] = PPM_MAX_COMMAND + 1;
+			break;
+		case BUTTON_FLIP2:
+			ppm[AUX1] = PPM_MAX_COMMAND + 1;
+			break;
+	}
+	btn_last = btn;
+
 #ifdef DEBUG_ANALOG_PPM
 #if 0
        Serial.write('\r');

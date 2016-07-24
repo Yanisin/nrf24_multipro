@@ -41,12 +41,6 @@ uint8_t NRF24L01_Reset(void);
 void NRF24L01_Initialize(void);
 void init_protocol(void);
 
-uint8_t btn;
-
-uint8_t mode;
-uint8_t mode_btn_last;
-
-
 #define RF_POWER TX_POWER_80mW 
 
 // PPM stream settings
@@ -65,16 +59,6 @@ enum chan_order{
     AUX7,  // (CH11) calibrate X (V2x2), roll trim (H7)
     AUX8,  // (CH12) Reset / Rebind
 };
-
-
-enum buttons1 {
-  BTN_FLIP1,
-  BTN_FLIP2,
-  BTN_MODE,
-  BTN_HEADLESS,
-  BTN_AUX1,
-  BTN_AUX2
-  };
 
 #define PPM_MIN_A 0
 #define PPM_SAFE_THROTTLE_A 60
@@ -160,10 +144,6 @@ void setup()
     pinMode(MISO_pin, INPUT);
 
     Serial.print("\r\n Starting\r\n");
-
-    
-    mode = 0x00;
-    mode_btn_last=0;
 
 Serial.write('a');
     // PPM ISR setup
