@@ -106,7 +106,11 @@ void Bayang_send_packet(u8 bind)
         packet[11] = transmitterID[1];
     } else {
         packet[0] = 0xa5;
-        packet[1] = 0xfa;   // normal mode is 0xf7, expert 0xfa
+        if(ppm[AUX5] > PPM_MIN_COMMAND)
+            packet[1] = 0xfa;
+        else
+            packet[1] = 0xf7;
+
         packet[2] = GET_FLAG(AUX2, BAYANG_FLAG_FLIP)
                   | GET_FLAG(AUX5, BAYANG_FLAG_HEADLESS)
                   | GET_FLAG(AUX6, BAYANG_FLAG_RTH)
