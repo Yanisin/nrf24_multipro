@@ -154,6 +154,9 @@ Serial.write('a');
 Serial.write('b');
     set_txid(false);
     Serial.write('c');
+#ifdef DISPLAY_IFACE
+	display_init();
+#endif
 }
 
 void loop()
