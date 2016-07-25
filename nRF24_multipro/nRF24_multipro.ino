@@ -126,6 +126,7 @@ static bool reset=true;
 volatile uint16_t Servo_data[12];
 static uint16_t ppm[12] = {PPM_MIN,PPM_MIN,PPM_MIN,PPM_MIN,PPM_MID,PPM_MID,
                            PPM_MID,PPM_MID,PPM_MID,PPM_MID,PPM_MID,PPM_MID,};
+static int8_t trim[] = {0, 0, 0, 0};
 void ISR_ppm();
 
 void setup()
@@ -169,6 +170,9 @@ void loop()
       tone(BUZ_PIN, 4000, 10);
         reset = false;
         selectProtocol();
+#ifdef ANALOG_PPM
+        readPPMBias();
+#endif
         NRF24L01_Reset();
         NRF24L01_Initialize();
         init_protocol();

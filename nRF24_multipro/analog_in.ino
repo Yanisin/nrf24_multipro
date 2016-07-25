@@ -2,6 +2,9 @@
 #define PPM_RANGE (PPM_MAX-PPM_MIN)
 #define PPM_RANGE_A (PPM_MAX_A-PPM_MIN_A)
 
+#define PPM_BIAS_READ_COUNT (10)
+#define PPM_BIAS_READ_DELAY (10)
+
 enum {
 	BUTTON_NONE = 0,
 
@@ -47,8 +50,15 @@ enum {
 	BUTTON_MODE = BUTTON_L_LEFT,
 	BUTTON_HEADLESS = BUTTON_L_RIGHT,
 	BUTTON_AUX1 = BUTTON_L_UP,
-	BUTTON_AUX2 = BUTTON_L_DOWN
+	BUTTON_AUX2 = BUTTON_L_DOWN,
+	
+	BUTTON_TRIM_AILERON_MINUS = BUTTON_R_LEFT,
+	BUTTON_TRIM_AILERON_PLUS = BUTTON_R_RIGHT,
+	BUTTON_TRIM_ELEVATOR_MINUS = BUTTON_R_DOWN,
+	BUTTON_TRIM_ELEVATOR_PLUS = BUTTON_R_UP,
 };
+
+static int8_t ppm_aileron_bias, ppm_elevator_bias;
 
 // update ppm values out of ISR    
 void update_ppm()
@@ -85,8 +95,8 @@ Serial.print(aux1);
 #endif
 
   ppm[THROTTLE] = (int)(PPM_MIN + (thr * PPM_RANGE)/PPM_RANGE_A);
-  ppm[AILERON] = (int)(PPM_MIN + (ail * PPM_RANGE)/PPM_RANGE_A);
-  ppm[ELEVATOR] = (int)(PPM_MIN + (ele * PPM_RANGE)/PPM_RANGE_A);
+  ppm[AILERON] = constrain((int)(PPM_MIN + (ail * PPM_RANGE)/PPM_RANGE_A) + ppm_aileron_bias + trim[AILERON], PPM_MIN, PPM_MAX);
+  ppm[ELEVATOR] = constrain((int)(PPM_MIN + (ele * PPM_RANGE)/PPM_RANGE_A) + ppm_elevator_bias + trim[ELEVATOR], PPM_MIN, PPM_MAX);
   ppm[RUDDER] = (int)(PPM_MIN + (rud * PPM_RANGE)/PPM_RANGE_A);
   //ppm[AUX1] = (int)(PPM_MIN + (aux1 * PPM_RANGE)/PPM_RANGE_A);
 
@@ -139,6 +149,26 @@ Serial.print(aux1);
 		case BUTTON_FLIP2:
 			ppm[AUX1] = PPM_MAX_COMMAND + 1;
 			break;
+		case BUTTON_TRIM_AILERON_MINUS:
+			if (btn_last != BUTTON_NONE)
+				break;
+			trim[AILERON]--;
+			break;
+		case BUTTON_TRIM_AILERON_PLUS:
+			if (btn_last != BUTTON_NONE)
+				break;
+			trim[AILERON]++;
+			break;
+		case BUTTON_TRIM_ELEVATOR_MINUS:
+			if (btn_last != BUTTON_NONE)
+				break;
+			trim[ELEVATOR]--;
+			break;
+		case BUTTON_TRIM_ELEVATOR_PLUS:
+			if (btn_last != BUTTON_NONE)
+				break;
+			trim[ELEVATOR]++;
+			break;
 	}
 	btn_last = btn;
 
@@ -158,6 +188,25 @@ Serial.print(aux1);
 #endif
 }
 
+
+void readPPMBias(void)
+{
+	uint32_t ail = 0, ele = 0;
+
+	for (uint16_t i = 0; i < PPM_BIAS_READ_COUNT; i++) {
+		update_ppm();
+		ail += ppm[AILERON];
+		ele += ppm[ELEVATOR];
+		delay(PPM_BIAS_READ_DELAY);
+	}
+
+	ail /= PPM_BIAS_READ_COUNT;
+	ele /= PPM_BIAS_READ_COUNT;
+
+	// let's hope this doesn't overflow
+	ppm_aileron_bias = PPM_MID - ail;
+	ppm_elevator_bias = PPM_MID - ele;
+}
 
 #if 0
 // update ppm values out of ISR    
