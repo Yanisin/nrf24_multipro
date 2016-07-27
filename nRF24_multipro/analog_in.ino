@@ -58,7 +58,7 @@ enum {
 	BUTTON_TRIM_ELEVATOR_PLUS = BUTTON_R_UP,
 };
 
-static int8_t ppm_aileron_bias, ppm_elevator_bias;
+static int8_t ppm_bias[4];
 
 // update ppm values out of ISR    
 void update_ppm()
@@ -95,8 +95,8 @@ Serial.print(aux1);
 #endif
 
   ppm[THROTTLE] = (int)(PPM_MIN + (thr * PPM_RANGE)/PPM_RANGE_A);
-  ppm[AILERON] = constrain((int)(PPM_MIN + (ail * PPM_RANGE)/PPM_RANGE_A) + ppm_aileron_bias + trim[AILERON], PPM_MIN, PPM_MAX);
-  ppm[ELEVATOR] = constrain((int)(PPM_MIN + (ele * PPM_RANGE)/PPM_RANGE_A) + ppm_elevator_bias + trim[ELEVATOR], PPM_MIN, PPM_MAX);
+  ppm[AILERON] = constrain((int)(PPM_MIN + (ail * PPM_RANGE)/PPM_RANGE_A) + ppm_bias[AILERON] + trim[AILERON], PPM_MIN, PPM_MAX);
+  ppm[ELEVATOR] = constrain((int)(PPM_MIN + (ele * PPM_RANGE)/PPM_RANGE_A) + ppm_bias[ELEVATOR] + trim[ELEVATOR], PPM_MIN, PPM_MAX);
   ppm[RUDDER] = (int)(PPM_MIN + (rud * PPM_RANGE)/PPM_RANGE_A);
   //ppm[AUX1] = (int)(PPM_MIN + (aux1 * PPM_RANGE)/PPM_RANGE_A);
 
@@ -152,24 +152,23 @@ Serial.print(aux1);
 			ppm[AUX1] = PPM_MAX_COMMAND + 1;
 			break;
 		case BUTTON_TRIM_AILERON_MINUS:
-			if (btn_last != BUTTON_NONE)
-				break;
-			trim[AILERON]--;
-			break;
 		case BUTTON_TRIM_AILERON_PLUS:
-			if (btn_last != BUTTON_NONE)
-				break;
-			trim[AILERON]++;
-			break;
 		case BUTTON_TRIM_ELEVATOR_MINUS:
-			if (btn_last != BUTTON_NONE)
-				break;
-			trim[ELEVATOR]--;
-			break;
 		case BUTTON_TRIM_ELEVATOR_PLUS:
 			if (btn_last != BUTTON_NONE)
 				break;
-			trim[ELEVATOR]++;
+
+			if (btn == BUTTON_TRIM_AILERON_MINUS)
+				trim[AILERON]--;
+			else if (btn == BUTTON_TRIM_AILERON_PLUS)
+				trim[AILERON]++;
+			else if (btn == BUTTON_TRIM_ELEVATOR_MINUS)
+				trim[ELEVATOR]--;
+			else if (btn == BUTTON_TRIM_ELEVATOR_PLUS)
+				trim[ELEVATOR]++;
+#ifdef DISPLAY_IFACE
+			display_update();
+#endif
 			break;
 	}
 	btn_last = btn;
@@ -206,8 +205,8 @@ void readPPMBias(void)
 	ele /= PPM_BIAS_READ_COUNT;
 
 	// let's hope this doesn't overflow
-	ppm_aileron_bias = PPM_MID - ail;
-	ppm_elevator_bias = PPM_MID - ele;
+	ppm_bias[AILERON] = PPM_MID - ail;
+	ppm_bias[ELEVATOR] = PPM_MID - ele;
 }
 
 #if 0

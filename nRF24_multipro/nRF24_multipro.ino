@@ -28,8 +28,15 @@
  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "cfg.h"
 #include <util/atomic.h>
 #include <EEPROM.h>
+
+#ifdef DISPLAY_IFACE
+#include <Wire.h>
+#include <ACROBOTIC_SSD1306.h>
+#endif
+
 #include "iface_nrf24l01.h"
 
 #include "pincfg.h"
@@ -40,6 +47,7 @@
 uint8_t NRF24L01_Reset(void);
 void NRF24L01_Initialize(void);
 void init_protocol(void);
+const char *current_protocol_str = "?";
 
 #define RF_POWER TX_POWER_80mW 
 
@@ -176,6 +184,11 @@ void loop()
         NRF24L01_Reset();
         NRF24L01_Initialize();
         init_protocol();
+
+#ifdef DISPLAY_IFACE
+        oled.clearDisplay();
+        display_update();
+#endif
     }
     
     // process protocol
@@ -333,62 +346,70 @@ void selectProtocol()
     Serial.write('H');
 }
 
+void print_protocol(void)
+{
+	Serial.print(current_protocol_str);
+	Serial.print("\r\n");
+
+	display_update();
+}
+
 void init_protocol()
 {
     Serial.print("\r\nProtocol:");
     switch(current_protocol) {
         case PROTO_CG023:
         case PROTO_YD829:
-            Serial.print("CG023, YD829\r\n");
+            current_protocol_str = "CG023, YD829"; print_protocol();
             CG023_init();
             CG023_bind();
             break;
         case PROTO_V2X2:
-           Serial.print("V2X2 \r\n");
+           current_protocol_str = "V2X2"; print_protocol();
             V2x2_init();
             V2x2_bind();
             break;
         case PROTO_CX10_GREEN:
         case PROTO_CX10_BLUE:
-            Serial.print("CX10 Green/Blue\r\n");
+            current_protocol_str = "CX10 Green/Blue"; print_protocol();
             CX10_init();
             CX10_bind();
             break;
         case PROTO_H7:
-            Serial.print("H7\r\n");
+            current_protocol_str = "H7"; print_protocol();
             H7_init();
             H7_bind();
             break;
         case PROTO_BAYANG:
-            Serial.print("Bayang\r\n");
+            current_protocol_str = "Bayang"; print_protocol();
             Bayang_init();
             Bayang_bind();
             break;
         case PROTO_SYMAX5C1:
         case PROTO_SYMAXOLD:
-            Serial.print("Syma 5C1, Old\r\n");
+            current_protocol_str = "Syma 5C1, Old"; print_protocol();
             Symax_init();
             break;
         case PROTO_H8_3D:
-            Serial.print("H8 3D\r\n");
+            current_protocol_str = "H8 3D"; print_protocol();
             H8_3D_init();
             H8_3D_bind();
             break;
         case PROTO_MJX:
-            Serial.print("MJX\r\n");
+            current_protocol_str = "MJX"; print_protocol();
             MJX_init();
             MJX_bind();
             break;
         case PROTO_HISKY:
-            Serial.print("HiSky\r\n");
+            current_protocol_str = "HiSky"; print_protocol();
             HiSky_init();
             break;
         case PROTO_KN:
-            Serial.print("KN\r\n");
+            current_protocol_str = "KN"; print_protocol();
             kn_start_tx(true); // autobind
             break;
         case PROTO_YD717:
-            Serial.print("YD717\r\n");
+            current_protocol_str = "YD717"; print_protocol();
             YD717_init();
             break;
     }

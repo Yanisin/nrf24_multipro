@@ -23,6 +23,37 @@ void display_init(void)
 	Wire.begin();	
 	oled.init();                      // Initialze SSD1306 OLED display
 	oled.clearDisplay();              // Clear screen
+
+	oled.setTextXY(0, 0);
+	oled.putString("multipro alive");
+
+	oled.setTextXY(2, 0);
+	oled.putString("Init... Proto or");
+	oled.setTextXY(3, 0);
+	oled.putString("throttle down");
+}
+
+void display_update(void)
+{
+	oled.setTextXY(0, 0);
+	oled.putString(current_protocol_str);
+
+	oled.setTextXY(2, 0);
+	oled.putString("Ail____ Ele____");
+
+	oled.setTextXY(2, 3);
+	oled.putNumber(trim[AILERON]);
+	oled.setTextXY(2, 11);
+	oled.putNumber(trim[ELEVATOR]);
+
+	oled.setTextXY(3, 0);
+	oled.putString("Measured bias");
+	oled.setTextXY(4, 0);
+	oled.putString("Ail____ Ele____");
+	oled.setTextXY(4, 3);
+	oled.putNumber(ppm_bias[AILERON]);
+	oled.setTextXY(4, 11);
+	oled.putNumber(ppm_bias[ELEVATOR]);
 }
 
 #endif
