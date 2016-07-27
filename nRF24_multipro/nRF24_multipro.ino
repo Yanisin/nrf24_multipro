@@ -184,11 +184,6 @@ void loop()
         NRF24L01_Reset();
         NRF24L01_Initialize();
         init_protocol();
-
-#ifdef DISPLAY_IFACE
-        oled.clearDisplay();
-        display_update();
-#endif
     }
     
     // process protocol
@@ -351,7 +346,10 @@ void print_protocol(void)
 	Serial.print(current_protocol_str);
 	Serial.print("\r\n");
 
+#ifdef DISPLAY_IFACE
+	oled.clearDisplay();
 	display_update();
+#endif
 }
 
 void init_protocol()

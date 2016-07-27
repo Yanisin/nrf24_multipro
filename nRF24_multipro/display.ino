@@ -37,6 +37,10 @@ void display_update(void)
 {
 	oled.setTextXY(0, 0);
 	oled.putString(current_protocol_str);
+	oled.setTextXY(1, 0);
+	oled.putString("Mode");
+	oled.setTextXY(1, 5);
+	oled.putNumber(aux_mode);
 
 	oled.setTextXY(2, 0);
 	oled.putString("Ail____ Ele____");
@@ -54,6 +58,11 @@ void display_update(void)
 	oled.putNumber(ppm_bias[AILERON]);
 	oled.setTextXY(4, 11);
 	oled.putNumber(ppm_bias[ELEVATOR]);
+
+	oled.setTextXY(5, 0);
+	oled.putString("Rudder div 2/");
+	oled.setTextXY(5, 14);
+	oled.putNumber(rudder_div);
 }
 
 #endif
