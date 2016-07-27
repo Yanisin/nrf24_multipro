@@ -123,6 +123,11 @@ Serial.print(aux1);
 	ppm[AUX1] = 0; // see BUTTON_FLIP2
 	ppm[AUX2] = 0; // see BUTTON_FLIP1
 
+	if (btn_last == BUTTON_NONE &&
+		btn != BUTTON_NONE && btn != BUTTON_MODE &&
+		btn != BUTTON_FLIP1 && btn != BUTTON_FLIP2) {
+		tone(BUZ_PIN, 8000, 5);
+	}
 	// looks like the capacitor evens out the button input nicely, so no noise
 	// cancelation here...
 	switch (btn) {
@@ -130,10 +135,7 @@ Serial.print(aux1);
 			if (btn_last != BUTTON_NONE)
 				break;
 			aux_mode = (aux_mode + 1) % 3;
-			for (uint8_t m=0; m <= aux_mode; m++){
-				tone(BUZ_PIN, 4000, 10);
-				delay(40);
-			}
+			tone(BUZ_PIN, (aux_mode + 1) * 1000, 10);
 
 			if (aux_mode == 1)
 				ppm[AUX5] = PPM_MIN_COMMAND + 1;
