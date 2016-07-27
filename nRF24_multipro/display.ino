@@ -23,10 +23,6 @@ void display_init(void)
 	Wire.begin();	
 	oled.init();                      // Initialze SSD1306 OLED display
 	oled.clearDisplay();              // Clear screen
-	oled.setInverseDisplay();
-	oled.setTextXY(0,0);              // Set cursor position, start of line 0
-	oled.putString("Hello there");
-	delay(200);
 }
 
 #endif
