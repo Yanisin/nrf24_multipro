@@ -15,6 +15,9 @@ ${PROGRAM}: build $(shell ls *.ino *.h Makefile | grep -v 'cfg\.h')
 build:
 	mkdir $@
 
+clean:
+	rm -r build
+
 install: ${PROGRAM}
 	ps aux|grep -v grep | grep ttyUSB0 | grep -q minicom && killall -9 minicom || true
 	avrdude -c avrisp -p m328p -P /dev/ttyUSB0 -b 57600 -U flash:w:${PROGRAM}
