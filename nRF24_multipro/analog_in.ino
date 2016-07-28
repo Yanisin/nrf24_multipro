@@ -1,6 +1,11 @@
+uint8_t aux_mode = 0;
+uint8_t rudder_div = 2;
 #define PPM_SCALE ((PPM_MAX-PPM_MIN)/(PPM_MAX_A - PPM_MIN_A))
 #define PPM_RANGE (PPM_MAX-PPM_MIN)
 #define PPM_RANGE_A (PPM_MAX_A-PPM_MIN_A)
+
+#define PPM_BIAS_READ_COUNT (10)
+#define PPM_BIAS_READ_DELAY (10)
 
 enum {
 	BUTTON_NONE = 0,
@@ -45,10 +50,17 @@ enum {
 	BUTTON_FLIP1 = BUTTON_F_RIGHT,
 	BUTTON_FLIP2 = BUTTON_F_LEFT,
 	BUTTON_MODE = BUTTON_L_LEFT,
-	BUTTON_HEADLESS = BUTTON_L_RIGHT,
+	BUTTON_RUDDER_DIV = BUTTON_L_RIGHT,
 	BUTTON_AUX1 = BUTTON_L_UP,
-	BUTTON_AUX2 = BUTTON_L_DOWN
+	BUTTON_AUX2 = BUTTON_L_DOWN,
+	
+	BUTTON_TRIM_AILERON_MINUS = BUTTON_R_LEFT,
+	BUTTON_TRIM_AILERON_PLUS = BUTTON_R_RIGHT,
+	BUTTON_TRIM_ELEVATOR_MINUS = BUTTON_R_DOWN,
+	BUTTON_TRIM_ELEVATOR_PLUS = BUTTON_R_UP,
 };
+
+static int8_t ppm_bias[4];
 
 // update ppm values out of ISR    
 void update_ppm()
@@ -56,7 +68,6 @@ void update_ppm()
   static uint32_t thr,ail,ele,rud,aux1;
   static uint8_t btn, btn_last = BUTTON_NONE;
   static uint8_t i;
-  static uint8_t aux_mode = 0;
 
   thr = analogRead(THR_PIN);
   ail = analogRead(AIL_PIN);   
@@ -85,9 +96,14 @@ Serial.print(aux1);
 #endif
 
   ppm[THROTTLE] = (int)(PPM_MIN + (thr * PPM_RANGE)/PPM_RANGE_A);
-  ppm[AILERON] = (int)(PPM_MIN + (ail * PPM_RANGE)/PPM_RANGE_A);
-  ppm[ELEVATOR] = (int)(PPM_MIN + (ele * PPM_RANGE)/PPM_RANGE_A);
+  ppm[AILERON] = constrain((int)(PPM_MIN + (ail * PPM_RANGE)/PPM_RANGE_A) + ppm_bias[AILERON] + trim[AILERON], PPM_MIN, PPM_MAX);
+  ppm[ELEVATOR] = constrain((int)(PPM_MIN + (ele * PPM_RANGE)/PPM_RANGE_A) + ppm_bias[ELEVATOR] + trim[ELEVATOR], PPM_MIN, PPM_MAX);
   ppm[RUDDER] = (int)(PPM_MIN + (rud * PPM_RANGE)/PPM_RANGE_A);
+
+  /* 1/1 ... 1/3 */
+  if (rudder_div != 2)
+      ppm[RUDDER] = signed(ppm[RUDDER] - PPM_MID) * 2 / rudder_div + PPM_MID;
+
   //ppm[AUX1] = (int)(PPM_MIN + (aux1 * PPM_RANGE)/PPM_RANGE_A);
 
   btn = BUTTON_NONE;
@@ -113,6 +129,14 @@ Serial.print(aux1);
 	ppm[AUX1] = 0; // see BUTTON_FLIP2
 	ppm[AUX2] = 0; // see BUTTON_FLIP1
 
+	if (btn_last == BUTTON_NONE &&
+		btn != BUTTON_NONE &&
+#ifndef DISPLAY_IFACE
+		btn != BUTTON_MODE &&
+#endif
+		btn != BUTTON_FLIP1 && btn != BUTTON_FLIP2) {
+		tone(BUZ_PIN, 8000, 5);
+	}
 	// looks like the capacitor evens out the button input nicely, so no noise
 	// cancelation here...
 	switch (btn) {
@@ -120,10 +144,12 @@ Serial.print(aux1);
 			if (btn_last != BUTTON_NONE)
 				break;
 			aux_mode = (aux_mode + 1) % 3;
-			for (uint8_t m=0; m <= aux_mode; m++){
-				tone(BUZ_PIN, 4000, 10);
-				delay(40);
-			}
+
+#ifndef DISPLAY_IFACE
+			tone(BUZ_PIN, (aux_mode + 1) * 1000, 10);
+#else
+			display_update();
+#endif
 
 			if (aux_mode == 1)
 				ppm[AUX5] = PPM_MIN_COMMAND + 1;
@@ -138,6 +164,35 @@ Serial.print(aux1);
 			break;
 		case BUTTON_FLIP2:
 			ppm[AUX1] = PPM_MAX_COMMAND + 1;
+			break;
+		case BUTTON_RUDDER_DIV:
+			if (btn_last != BUTTON_NONE)
+				break;
+
+			rudder_div = rudder_div + 1;
+			if (rudder_div == 7)
+				rudder_div = 2;
+
+			display_update();
+			break;
+		case BUTTON_TRIM_AILERON_MINUS:
+		case BUTTON_TRIM_AILERON_PLUS:
+		case BUTTON_TRIM_ELEVATOR_MINUS:
+		case BUTTON_TRIM_ELEVATOR_PLUS:
+			if (btn_last != BUTTON_NONE)
+				break;
+
+			if (btn == BUTTON_TRIM_AILERON_MINUS)
+				trim[AILERON] -= 5;
+			else if (btn == BUTTON_TRIM_AILERON_PLUS)
+				trim[AILERON] += 5;
+			else if (btn == BUTTON_TRIM_ELEVATOR_MINUS)
+				trim[ELEVATOR] -= 5;
+			else if (btn == BUTTON_TRIM_ELEVATOR_PLUS)
+				trim[ELEVATOR] += 5;
+#ifdef DISPLAY_IFACE
+			display_update();
+#endif
 			break;
 	}
 	btn_last = btn;
@@ -158,6 +213,25 @@ Serial.print(aux1);
 #endif
 }
 
+
+void readPPMBias(void)
+{
+	uint32_t ail = 0, ele = 0;
+
+	for (uint16_t i = 0; i < PPM_BIAS_READ_COUNT; i++) {
+		update_ppm();
+		ail += ppm[AILERON];
+		ele += ppm[ELEVATOR];
+		delay(PPM_BIAS_READ_DELAY);
+	}
+
+	ail /= PPM_BIAS_READ_COUNT;
+	ele /= PPM_BIAS_READ_COUNT;
+
+	// let's hope this doesn't overflow
+	ppm_bias[AILERON] = PPM_MID - ail;
+	ppm_bias[ELEVATOR] = PPM_MID - ele;
+}
 
 #if 0
 // update ppm values out of ISR    
