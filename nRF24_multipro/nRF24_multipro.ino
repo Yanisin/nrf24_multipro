@@ -32,7 +32,7 @@
 #include <EEPROM.h>
 #include "iface_nrf24l01.h"
 
-#include "pincfg.h"
+#include "cfg.h"
 
 
 /*FIXME how is the right way for arduino? */
