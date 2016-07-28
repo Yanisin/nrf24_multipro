@@ -1,3 +1,4 @@
+
 uint8_t aux_mode = 0;
 uint8_t rudder_div = 2;
 #define PPM_SCALE ((PPM_MAX-PPM_MIN)/(PPM_MAX_A - PPM_MIN_A))
@@ -6,6 +7,8 @@ uint8_t rudder_div = 2;
 
 #define PPM_BIAS_READ_COUNT (10)
 #define PPM_BIAS_READ_DELAY (10)
+
+
 
 enum {
 	BUTTON_NONE = 0,
@@ -173,7 +176,9 @@ Serial.print(aux1);
 			if (rudder_div == 7)
 				rudder_div = 2;
 
+#ifdef DISPLAY_IFACE
 			display_update();
+#endif
 			break;
 		case BUTTON_TRIM_AILERON_MINUS:
 		case BUTTON_TRIM_AILERON_PLUS:
