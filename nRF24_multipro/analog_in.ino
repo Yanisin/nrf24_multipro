@@ -65,6 +65,23 @@ enum {
 
 static int8_t ppm_bias[4];
 
+void analogPPM_init(void)
+{
+	// try loading previous settings from EEPROM
+	aux_mode = constrain(EEPROM.read(ee_PPM_MODE), 0, 2);
+	rudder_div = constrain(EEPROM.read(ee_PPM_RUDDER_DIV), 2, 6);
+	ppm_bias[ELEVATOR] = constrain((signed)EEPROM.read(ee_PPM_BIAS_ELEVATOR) - 100, -100, 100);
+	ppm_bias[AILERON] = constrain((signed)EEPROM.read(ee_PPM_BIAS_AILERON) - 100, -100, 100);
+}
+
+void savePPM(void)
+{
+	EEPROM.update(ee_PPM_MODE, aux_mode);
+	EEPROM.update(ee_PPM_RUDDER_DIV, rudder_div);
+	EEPROM.update(ee_PPM_BIAS_ELEVATOR, ppm_bias[ELEVATOR] + 100);
+	EEPROM.update(ee_PPM_BIAS_AILERON, ppm_bias[AILERON] + 100);
+}
+
 // update ppm values out of ISR    
 void update_ppm()
 {
@@ -184,6 +201,7 @@ Serial.print(aux1);
 			else
 				ppm[AUX5] = 0;
 
+			savePPM();
 			break;
 		case BUTTON_FLIP1:
 			ppm[AUX2] = PPM_MAX_COMMAND + 1;
@@ -199,6 +217,7 @@ Serial.print(aux1);
 			if (rudder_div == 7)
 				rudder_div = 2;
 
+			savePPM();
 #ifdef DISPLAY_IFACE
 			display_update();
 #endif
@@ -235,6 +254,7 @@ Serial.print(aux1);
 
 				calibrating = 1;
 				readPPMBias();
+				savePPM();
 				calibrating = 0;
 #ifdef DISPLAY_IFACE
 				display_update();

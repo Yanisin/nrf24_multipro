@@ -123,7 +123,11 @@ enum{
     ee_TXID0,
     ee_TXID1,
     ee_TXID2,
-    ee_TXID3
+    ee_TXID3,
+    ee_PPM_MODE,
+    ee_PPM_RUDDER_DIV,
+    ee_PPM_BIAS_ELEVATOR,
+    ee_PPM_BIAS_AILERON
 };
 
 uint8_t transmitterID[4];
@@ -163,6 +167,9 @@ Serial.write('a');
 Serial.write('b');
     set_txid(false);
     Serial.write('c');
+#ifdef ANALOG_PPM
+	analogPPM_init();
+#endif
 #ifdef DISPLAY_IFACE
 	display_init();
 #endif
