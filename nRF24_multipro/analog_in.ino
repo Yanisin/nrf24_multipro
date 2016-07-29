@@ -55,7 +55,7 @@ enum {
 	BUTTON_MODE = BUTTON_L_LEFT,
 	BUTTON_RUDDER_DIV = BUTTON_L_RIGHT,
 	BUTTON_AUX1 = BUTTON_L_UP,
-	BUTTON_AUX2 = BUTTON_L_DOWN,
+	BUTTON_CALIBRATE_BIAS = BUTTON_L_DOWN,
 	
 	BUTTON_TRIM_AILERON_MINUS = BUTTON_R_LEFT,
 	BUTTON_TRIM_AILERON_PLUS = BUTTON_R_RIGHT,
@@ -132,6 +132,29 @@ Serial.print(aux1);
 	ppm[AUX1] = 0; // see BUTTON_FLIP2
 	ppm[AUX2] = 0; // see BUTTON_FLIP1
 
+#ifdef DISPLAY_IFACE
+	{
+		static unsigned long time_on = 0;
+		static uint8_t display_on = 1;
+
+		if (time_on == 0)
+			time_on = millis();
+		if (display_on) {
+			if (millis() - time_on > 10000) {
+				oled.sendCommand(0xAE); // display off
+				display_on = 0;
+			}
+		} else {
+			if (btn != BUTTON_NONE &&
+				btn != BUTTON_FLIP1 && btn != BUTTON_FLIP2) {
+				oled.sendCommand(0xAF); // on
+				display_on = 1;
+				time_on = millis();
+			}
+		}
+	}
+#endif
+
 	if (btn_last == BUTTON_NONE &&
 		btn != BUTTON_NONE &&
 #ifndef DISPLAY_IFACE
@@ -199,6 +222,26 @@ Serial.print(aux1);
 			display_update();
 #endif
 			break;
+		case BUTTON_CALIBRATE_BIAS:
+			{
+				static int calibrating = 0;
+				if (calibrating)
+					break;
+
+				ppm_bias[AILERON] = 0;
+				ppm_bias[ELEVATOR] = 0;
+				trim[AILERON] = 0;
+				trim[ELEVATOR] = 0;
+
+				calibrating = 1;
+				readPPMBias();
+				calibrating = 0;
+#ifdef DISPLAY_IFACE
+				display_update();
+#endif
+			}
+			break;
+
 	}
 	btn_last = btn;
 

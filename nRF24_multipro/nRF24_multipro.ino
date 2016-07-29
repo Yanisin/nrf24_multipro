@@ -173,14 +173,9 @@ void loop()
     uint32_t timeout=0;
     // reset / rebind
     if(reset || ppm[AUX8] > PPM_MAX_COMMAND) {
-      Serial.write('B');
-    /* 1kHZ, na 100ms */
-      tone(BUZ_PIN, 4000, 10);
+        tone(BUZ_PIN, 4000, 10);
         reset = false;
         selectProtocol();
-#ifdef ANALOG_PPM
-        readPPMBias();
-#endif
         NRF24L01_Reset();
         NRF24L01_Initialize();
         init_protocol();
@@ -190,7 +185,6 @@ void loop()
     switch(current_protocol) {
         case PROTO_CG023:
         case PROTO_YD829:
-        
             timeout = process_CG023();
             break;
         case PROTO_V2X2:
