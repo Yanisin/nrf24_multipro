@@ -1,6 +1,7 @@
-
 uint8_t aux_mode = 0;
 uint8_t rudder_div = 2;
+uint8_t processButtons = 1;
+
 #define PPM_SCALE ((PPM_MAX-PPM_MIN)/(PPM_MAX_A - PPM_MIN_A))
 #define PPM_RANGE (PPM_MAX-PPM_MIN)
 #define PPM_RANGE_A (PPM_MAX_A-PPM_MIN_A)
@@ -28,7 +29,6 @@ enum {
 
 	BUTTON_COUNT
 };
-
 const uint16_t btns_range = 20;
 
 const uint16_t btns[BUTTON_COUNT] = {
@@ -54,14 +54,22 @@ enum {
 	BUTTON_FLIP2 = BUTTON_F_LEFT,
 	BUTTON_MODE = BUTTON_L_LEFT,
 	BUTTON_RUDDER_DIV = BUTTON_L_RIGHT,
-	BUTTON_AUX1 = BUTTON_L_UP,
 	BUTTON_CALIBRATE_BIAS = BUTTON_L_DOWN,
 	
 	BUTTON_TRIM_AILERON_MINUS = BUTTON_R_LEFT,
 	BUTTON_TRIM_AILERON_PLUS = BUTTON_R_RIGHT,
 	BUTTON_TRIM_ELEVATOR_MINUS = BUTTON_R_DOWN,
 	BUTTON_TRIM_ELEVATOR_PLUS = BUTTON_R_UP,
+
+#ifdef DISPLAY_IFACE
+	BUTTON_MENU = BUTTON_L_UP,
+	BUTTON_MENU_UP = BUTTON_R_UP,
+	BUTTON_MENU_DOWN = BUTTON_R_DOWN,
+	BUTTON_MENU_PLUS = BUTTON_R_RIGHT,
+	BUTTON_MENU_MINUS = BUTTON_R_LEFT,
+#endif
 };
+static uint8_t btn, btn_last = BUTTON_NONE;
 
 static int8_t ppm_bias[4];
 
@@ -82,11 +90,127 @@ void savePPM(void)
 	EEPROM.update(ee_PPM_BIAS_AILERON, ppm_bias[AILERON] + 100);
 }
 
+#ifdef DISPLAY_IFACE
+enum {
+	MENU_ITEM_BOOL = 0,
+	MENU_ITEM_UINT8,
+	MENU_ITEM_INT8
+};
+struct {
+	const char *name;
+	uint8_t type;
+	void *data;
+} menuItems[] = {
+	{ "Bayang/DTRIM", MENU_ITEM_BOOL, &Bayang_dyntrim },
+	{ "Default proto", MENU_ITEM_UINT8, &current_protocol }
+};
+const uint8_t noItems = sizeof(menuItems) / sizeof(menuItems[0]);
+uint8_t curItem = 0;
+const uint8_t itemsPerPage = 6;
+
+void showMenu(void)
+{
+	uint8_t i;
+	const uint8_t first = (curItem / itemsPerPage) * itemsPerPage;
+	const uint8_t last = min(noItems, (curItem / itemsPerPage) * itemsPerPage + itemsPerPage);
+
+	oled.clearDisplay();
+	for (i = first; i < last; i++) {
+		oled.setTextXY(i, 0);
+		oled.putString(menuItems[i].name);
+		oled.setTextXY(i, strlen(menuItems[i].name) + 1);
+		if (menuItems[i].type == MENU_ITEM_INT8)
+			oled.putNumber(*(int8_t*)menuItems[i].data);
+		else
+			oled.putNumber(*(uint8_t*)menuItems[i].data);
+	}
+
+	oled.setTextXY(curItem - first, 15);
+	oled.putString("*");
+}
+
+void doMenu(void)
+{
+	showMenu();
+
+	processButtons = 0;
+	while (1) {
+		update_ppm();
+
+		if (btn != BUTTON_NONE) {
+			if (btn_last != BUTTON_NONE) {
+				btn_last = btn;
+				continue;
+			}
+			tone(BUZ_PIN, 1000, 10);
+			btn_last = btn;
+		} else {
+			btn_last = BUTTON_NONE;
+			continue;
+		}
+
+		switch (btn) {
+		case BUTTON_MENU:
+			goto exit;
+		case BUTTON_MENU_UP:
+			if (curItem > 0)
+				curItem--;
+			else
+				curItem = noItems - 1;
+			break;
+		case BUTTON_MENU_DOWN:
+			if (curItem + 1 < noItems)
+				curItem++;
+			else
+				curItem = 0;
+			break;
+		case BUTTON_MENU_PLUS:
+			switch (menuItems[curItem].type) {
+			case MENU_ITEM_BOOL:
+				*(uint8_t*)menuItems[curItem].data = !*(uint8_t*)menuItems[curItem].data;
+				break;
+			case MENU_ITEM_UINT8:
+				*((uint8_t*)menuItems[curItem].data) += 1;
+				break;
+			case MENU_ITEM_INT8:
+				*((int8_t*)menuItems[curItem].data) += 1;
+				break;
+			}
+			break;
+		case BUTTON_MENU_MINUS:
+			switch (menuItems[curItem].type) {
+			case MENU_ITEM_BOOL:
+				*(uint8_t*)menuItems[curItem].data = !*(uint8_t*)menuItems[curItem].data;
+				break;
+			case MENU_ITEM_UINT8:
+				*((uint8_t*)menuItems[curItem].data) -= 1;
+				break;
+			case MENU_ITEM_INT8:
+				*((int8_t*)menuItems[curItem].data) -= 1;
+				break;
+			}
+			break;
+		}
+
+		showMenu();
+	}
+
+exit:
+	processButtons = 1;
+
+	/* store settings to eeprom */
+	EEPROM.update(ee_BAYANG_DISABLE_DYNTRIM, !Bayang_dyntrim);
+	EEPROM.update(ee_PROTOCOL_ID, current_protocol);
+
+	oled.clearDisplay();
+	display_update();
+}
+#endif
+
 // update ppm values out of ISR    
 void update_ppm()
 {
   static uint32_t thr,ail,ele,rud,aux1;
-  static uint8_t btn, btn_last = BUTTON_NONE;
   static uint8_t i;
 
   thr = analogRead(THR_PIN);
@@ -182,7 +306,7 @@ Serial.print(aux1);
 	}
 	// looks like the capacitor evens out the button input nicely, so no noise
 	// cancelation here...
-	switch (btn) {
+	if (processButtons) switch (btn) {
 		case BUTTON_MODE:
 			if (btn_last != BUTTON_NONE)
 				break;
@@ -261,9 +385,14 @@ Serial.print(aux1);
 #endif
 			}
 			break;
-
+#ifdef DISPLAY_IFACE
+		case BUTTON_MENU:
+			doMenu();
+			break;
+#endif
 	}
-	btn_last = btn;
+	if (processButtons)
+		btn_last = btn;
 
 #ifdef DEBUG_ANALOG_PPM
 #if 0
