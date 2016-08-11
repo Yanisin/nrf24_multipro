@@ -23,6 +23,7 @@
 static uint8_t Bayang_rf_chan;
 static uint8_t Bayang_rf_channels[BAYANG_RF_NUM_CHANNELS] = {0,};
 static uint8_t Bayang_rx_tx_addr[BAYANG_ADDRESS_LENGTH];
+uint8_t Bayang_dyntrim;
 
 enum{
     // flags going to packet[2]
@@ -49,6 +50,9 @@ void Bayang_init()
 {
     uint8_t i;
     const u8 bind_address[] = {0,0,0,0,0};
+
+    Bayang_dyntrim = !constrain(EEPROM.read(ee_BAYANG_DISABLE_DYNTRIM), 0, 1);
+
     for(i=0; i<BAYANG_ADDRESS_LENGTH; i++) {
         Bayang_rx_tx_addr[i] = random() & 0xff;
     }
@@ -118,16 +122,16 @@ void Bayang_send_packet(u8 bind)
                   | GET_FLAG(AUX4, BAYANG_FLAG_VIDEO);
         packet[3] = GET_FLAG(AUX1, BAYANG_FLAG_INVERT);
         chanval.value = map(ppm[AILERON], PPM_MIN, PPM_MAX, 0, 0x3ff);   // aileron
-        packet[4] = chanval.bytes.msb + DYNTRIM(chanval.value);
+        packet[4] = chanval.bytes.msb + Bayang_dyntrim ? DYNTRIM(chanval.value) : 0x7c;
         packet[5] = chanval.bytes.lsb;
         chanval.value = map(ppm[ELEVATOR], PPM_MIN, PPM_MAX, 0, 0x3ff);   // elevator
-        packet[6] = chanval.bytes.msb + DYNTRIM(chanval.value);
+        packet[6] = chanval.bytes.msb + Bayang_dyntrim ? DYNTRIM(chanval.value) : 0x7c;
         packet[7] = chanval.bytes.lsb;
         chanval.value = map(ppm[THROTTLE], PPM_MIN, PPM_MAX, 0, 0x3ff);   // throttle
         packet[8] = chanval.bytes.msb + 0x7c;
         packet[9] = chanval.bytes.lsb;
         chanval.value = map(ppm[RUDDER], PPM_MIN, PPM_MAX, 0, 0x3ff);   // rudder
-        packet[10] = chanval.bytes.msb + DYNTRIM(chanval.value);
+        packet[10] = chanval.bytes.msb + Bayang_dyntrim ? DYNTRIM(chanval.value) : 0x7c;
         packet[11] = chanval.bytes.lsb;
     }
     packet[12] = transmitterID[2];

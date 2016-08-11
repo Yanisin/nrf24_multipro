@@ -127,7 +127,8 @@ enum{
     ee_PPM_MODE,
     ee_PPM_RUDDER_DIV,
     ee_PPM_BIAS_ELEVATOR,
-    ee_PPM_BIAS_AILERON
+    ee_PPM_BIAS_AILERON,
+    ee_BAYANG_DISABLE_DYNTRIM,
 };
 
 uint8_t transmitterID[4];
