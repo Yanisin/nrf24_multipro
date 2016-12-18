@@ -122,16 +122,16 @@ void Bayang_send_packet(u8 bind)
                   | GET_FLAG(AUX4, BAYANG_FLAG_VIDEO);
         packet[3] = GET_FLAG(AUX1, BAYANG_FLAG_INVERT);
         chanval.value = map(ppm[AILERON], PPM_MIN, PPM_MAX, 0, 0x3ff);   // aileron
-        packet[4] = chanval.bytes.msb + Bayang_dyntrim ? DYNTRIM(chanval.value) : 0x7c;
+        packet[4] = chanval.bytes.msb + (Bayang_dyntrim ? DYNTRIM(chanval.value) : 0x7c);
         packet[5] = chanval.bytes.lsb;
         chanval.value = map(ppm[ELEVATOR], PPM_MIN, PPM_MAX, 0, 0x3ff);   // elevator
-        packet[6] = chanval.bytes.msb + Bayang_dyntrim ? DYNTRIM(chanval.value) : 0x7c;
+        packet[6] = chanval.bytes.msb + (Bayang_dyntrim ? DYNTRIM(chanval.value) : 0x7c);
         packet[7] = chanval.bytes.lsb;
         chanval.value = map(ppm[THROTTLE], PPM_MIN, PPM_MAX, 0, 0x3ff);   // throttle
         packet[8] = chanval.bytes.msb + 0x7c;
         packet[9] = chanval.bytes.lsb;
         chanval.value = map(ppm[RUDDER], PPM_MIN, PPM_MAX, 0, 0x3ff);   // rudder
-        packet[10] = chanval.bytes.msb + Bayang_dyntrim ? DYNTRIM(chanval.value) : 0x7c;
+        packet[10] = chanval.bytes.msb + (Bayang_dyntrim ? DYNTRIM(chanval.value) : 0x7c);
         packet[11] = chanval.bytes.lsb;
     }
     packet[12] = transmitterID[2];
