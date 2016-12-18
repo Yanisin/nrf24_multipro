@@ -129,6 +129,10 @@ enum{
     ee_PPM_BIAS_ELEVATOR,
     ee_PPM_BIAS_AILERON,
     ee_BAYANG_DISABLE_DYNTRIM,
+    ee_REINIT_PROTO,
+    ee_SAVE_TRIMS,
+    ee_TRIM_ELEVATOR,
+    ee_TRIM_AILERON,
 };
 
 uint8_t transmitterID[4];

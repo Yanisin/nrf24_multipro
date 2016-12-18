@@ -1,6 +1,8 @@
 uint8_t aux_mode = 0;
 uint8_t rudder_div = 2;
 uint8_t processButtons = 1;
+uint8_t reinit_proto = 0;
+uint8_t save_trims = 0;
 
 #define PPM_SCALE ((PPM_MAX-PPM_MIN)/(PPM_MAX_A - PPM_MIN_A))
 #define PPM_RANGE (PPM_MAX-PPM_MIN)
@@ -80,6 +82,19 @@ void analogPPM_init(void)
 	rudder_div = constrain(EEPROM.read(ee_PPM_RUDDER_DIV), 2, 6);
 	ppm_bias[ELEVATOR] = constrain((signed)EEPROM.read(ee_PPM_BIAS_ELEVATOR) - 100, -100, 100);
 	ppm_bias[AILERON] = constrain((signed)EEPROM.read(ee_PPM_BIAS_AILERON) - 100, -100, 100);
+
+#ifdef DISPLAY_IFACE
+	reinit_proto = constrain(EEPROM.read(ee_REINIT_PROTO), 0, 1);
+#endif
+	save_trims = constrain(EEPROM.read(ee_SAVE_TRIMS), 0, 1);
+	if (save_trims) {
+		trim[ELEVATOR] = constrain((signed)EEPROM.read(ee_TRIM_ELEVATOR) - 100, -100, 100);
+		trim[AILERON] = constrain((signed)EEPROM.read(ee_TRIM_AILERON) - 100, -100, 100);
+		if (trim[ELEVATOR] % 5)
+			trim[ELEVATOR] = 0;
+		if (trim[AILERON] % 5)
+			trim[AILERON] = 0;
+	}
 }
 
 void savePPM(void)
@@ -102,7 +117,9 @@ struct {
 	void *data;
 } menuItems[] = {
 	{ "Bayang/DTRIM", MENU_ITEM_BOOL, &Bayang_dyntrim },
-	{ "Default proto", MENU_ITEM_UINT8, &current_protocol }
+	{ "Default proto", MENU_ITEM_UINT8, &current_protocol },
+	{ "Reinit proto", MENU_ITEM_BOOL, &reinit_proto },
+	{ "Save trims", MENU_ITEM_BOOL, &save_trims },
 };
 const uint8_t noItems = sizeof(menuItems) / sizeof(menuItems[0]);
 uint8_t curItem = 0;
@@ -135,7 +152,7 @@ void doMenu(void)
 
 	processButtons = 0;
 	while (1) {
-		update_ppm();
+		loop();
 
 		if (btn != BUTTON_NONE) {
 			if (btn_last != BUTTON_NONE) {
@@ -201,9 +218,15 @@ exit:
 	/* store settings to eeprom */
 	EEPROM.update(ee_BAYANG_DISABLE_DYNTRIM, !Bayang_dyntrim);
 	EEPROM.update(ee_PROTOCOL_ID, current_protocol);
+	EEPROM.update(ee_REINIT_PROTO, reinit_proto);
+	EEPROM.update(ee_SAVE_TRIMS, save_trims);
 
 	oled.clearDisplay();
 	display_update();
+
+	if (reinit_proto) {
+		init_protocol();
+	}
 }
 #endif
 
@@ -361,9 +384,15 @@ Serial.print(aux1);
 				trim[ELEVATOR] -= 5;
 			else if (btn == BUTTON_TRIM_ELEVATOR_PLUS)
 				trim[ELEVATOR] += 5;
+			trim[AILERON] = constrain(trim[AILERON], -100, 100);
+			trim[ELEVATOR] = constrain(trim[ELEVATOR], -100, 100);
 #ifdef DISPLAY_IFACE
 			display_update();
 #endif
+			if (save_trims) {
+				EEPROM.update(ee_TRIM_ELEVATOR, trim[ELEVATOR] + 100);
+				EEPROM.update(ee_TRIM_AILERON, trim[AILERON] + 100);
+			}
 			break;
 		case BUTTON_CALIBRATE_BIAS:
 			{
