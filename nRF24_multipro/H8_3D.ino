@@ -27,7 +27,7 @@ enum {
     H8_3D_FLAG_RATE_HIGH= 0x04,
     H8_3D_FLAG_LED      = 0x08, // Light on H22
     H8_3D_FLAG_HEADLESS = 0x10, // RTH + headless on H8, headless on JJRC H20
-    H8_3D_FLAG_RTH      = 0x20, // 360� flip mode on H8 3D, RTH on JJRC H20
+    H8_3D_FLAG_RTH      = 0x20, // 360 deg flip mode on H8 3D, RTH on JJRC H20
 };
 
 enum {
